@@ -17,6 +17,8 @@ use Tymon\JWTAuth\Exceptions\JWTException;
 use Tymon\JWTAuth\Exceptions\TokenExpiredException;
 use Tymon\JWTAuth\Exceptions\TokenInvalidException;
 use Tymon\JWTAuth\Exceptions\TokenBlacklistedException;
+use Exception;
+
 
 class AuthController extends Controller
 {
@@ -37,6 +39,7 @@ class AuthController extends Controller
         
         $rules = [
             'name' => 'required|max:255',
+            'password' => 'required|max:50',
             'email' => 'required|email|max:255|unique:users'
         ];
 
@@ -44,7 +47,19 @@ class AuthController extends Controller
         
         if($validator->fails())
         {
-            return response()->json(['success'=> false, 'error'=> $validator->messages()]);
+           // return response()->json(['success'=> false, 'error'=> $validator->messages()]);
+
+        //response format
+        $msg_code='AuthC-5';
+        $msg=$validator->messages();
+        $error_code=401;
+        $api_token='';
+        $status=0;
+        $data=array();
+        return $this->setResponseAyra($status,'',$api_token,$msg_code,$msg,$error_code); //1.STATUS | 2.DATA |3.API_TOKEN |4.MESSAGE_CODE | 5. MESSAGE | 6. ERROR_CODE
+        //response format
+
+
         }
 
         $name = $request->name;
@@ -100,7 +115,9 @@ class AuthController extends Controller
 
     public function login(Request $request)
     {
-        $credentials = $request->only('email', 'password');
+
+        try{
+            $credentials = $request->only('email', 'password');
         
         $rules = [
             'email' => 'required|email',
@@ -110,7 +127,17 @@ class AuthController extends Controller
         $validator = Validator::make($credentials, $rules);
 
         if($validator->fails()) {
-            return response()->json(['success'=> false, 'error'=> $validator->messages()], 401);
+            
+            //response format
+            $msg_code='AuthC-1';
+            $msg='Email or password invalid';
+            $error_code=401;
+            $api_token="";
+            $status=0;
+            $data=array();
+            return $this->setResponseAyra($status,'',$api_token,$msg_code,$msg,$error_code); //1.STATUS | 2.DATA |3.API_TOKEN |4.MESSAGE_CODE | 5. MESSAGE | 6. ERROR_CODE
+            //response format
+
         }
         
         $credentials['is_verified'] = 1;
@@ -119,18 +146,54 @@ class AuthController extends Controller
             // attempt to verify the credentials and create a token for the user
             if (! $token = JWTAuth::attempt($credentials))
             {
-                return response()->json(['success' => false, 'error' => 'We cant find an account with this credentials. Please make sure you entered the right information and you have verified your email address.'], 404);
+                
+                //response format
+                $msg_code='AuthC-2';
+                $msg='We cant find an account with this credentials. Please make sure you entered the right information and you have verified your email address.';
+                $error_code=404;
+                $api_token="";
+                $status=0;
+                $data=array();
+                return $this->setResponseAyra($status,'',$api_token,$msg_code,$msg,$error_code); //1.STATUS | 2.DATA |3.API_TOKEN |4.MESSAGE_CODE | 5. MESSAGE | 6. ERROR_CODE
+                //response format
+            
+
             }
         } catch (JWTException $e)
         {
             // something went wrong whilst attempting to encode the token
-            return response()->json(['success' => false, 'error' => 'Failed to login, please try again.'], 500);
+        
+            //response format
+            $msg_code='AuthC-3';
+            $msg='Failed to login, please try again.';
+            $error_code=500;
+            $api_token="";
+            $status=0;
+            $data=array();
+            return $this->setResponseAyra($status,'',$api_token,$msg_code,$msg,$error_code); //1.STATUS | 2.DATA |3.API_TOKEN |4.MESSAGE_CODE | 5. MESSAGE | 6. ERROR_CODE
+            //response format
+
         }
 
         $token = $this->respondWithToken($token);
 
         // all good so return the token
-        return response()->json(['success' => true, 'data'=> [ 'token' => $token ]], 200);
+        //response format
+        $msg_code='AuthC-4';
+        $msg='You have successfully logged in';
+        $error_code=200;
+        $api_token=$token;
+        $status=1;
+        $data=array();
+        return $this->setResponseAyra($status,'',$api_token,$msg_code,$msg,$error_code); //1.STATUS | 2.DATA |3.API_TOKEN |4.MESSAGE_CODE | 5. MESSAGE | 6. ERROR_CODE
+        //response format
+
+
+        }
+        catch (Exception $ex) {
+            return $ex->getMessage();
+        }
+        
     }
 
     public function recoverRequest(Request $request)
@@ -253,6 +316,18 @@ class AuthController extends Controller
             'access_token' => $token,
             'token_type' => 'token',
             'expires_in' => $this->guard()->factory()->getTTL() * 60
+        ]);
+    }
+    //for Response Format
+    protected function setResponseAyra($status=0,$data=array(),$api_token=NULL,$msg_code=NULL,$message=NULL,$error_code=0){
+        return response()->json([
+            'STATUS' =>$status,
+            'DATA' => $data,
+            'API_TOKEN' =>$api_token,           
+            'MESSAGE_CODE' =>$msg_code,
+            'MESSAGE' =>$message,
+            'RESPONDE_CODE' =>$error_code
+            
         ]);
     }
 
