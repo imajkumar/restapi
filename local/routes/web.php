@@ -19,16 +19,17 @@ $router->get('/', function () use ($router) {
 $router->get('user/verify/{verification_code}', 'AuthController@verifyUser');
 
 $router->post('register', 'AuthController@register');
+$router->post('getoffer', 'ApiController@getOffer');
 $router->post('login', 'AuthController@login');
+
 
 $router->post('recover-request', 'AuthController@recoverRequest');
 $router->post('verify-temp-password', 'AuthController@verifyTempPassword');
 $router->post('set-new-password', 'AuthController@setNewPassword');
 
 Route::group(['middleware' => ['jwt.auth']], function() {
-
     Route::get('logout', 'AuthController@logout');
-    
+
     Route::get('allUser', 'TestController@allUser');
 
 });

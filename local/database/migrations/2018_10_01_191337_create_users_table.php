@@ -17,7 +17,11 @@ class CreateUsersTable extends Migration
             $table->increments('id');
             $table->string('name');
             $table->string('email', 191)->unique();
+            //$table->string('mobile', 191)->unique();
             $table->string('password');
+            $table->string('image')->default('');
+            $table->boolean('status')->default(1)->comment('0=Disable, 1=Enable');
+            $table->boolean('is_deleted')->default(0)->comment('0=No, 1=Yes');
             $table->timestamps();
         });
     }
